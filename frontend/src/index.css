@@ -407,6 +407,21 @@
 [data-theme="light"] .workflow-btn-reopened { background: rgba(124,58,237,0.06); color: #7C3AED; border-color: rgba(124,58,237,0.25); }
 [data-theme="light"] .workflow-btn-reopened:hover { background: rgba(124,58,237,0.12); }
 
+/* --- Light: Mobile header --- */
+[data-theme="light"] .mobile-header {
+  background: #FFFFFF;
+  border-bottom-color: #E2E8F0;
+}
+[data-theme="light"] .mobile-menu-btn {
+  border-color: #E2E8F0;
+  color: #64748B;
+}
+[data-theme="light"] .mobile-menu-btn:hover {
+  background: #F0F2F8;
+  border-color: #CBD5E1;
+  color: #172033;
+}
+
 /* --- Light: Spinner --- */
 [data-theme="light"] .spinner {
   border-color: rgba(112, 71, 235, 0.15);
@@ -1806,18 +1821,158 @@ ul, ol { list-style: none; }
    RESPONSIVE
    ============================================================ */
 
+/* --- Mobile header (hidden on desktop) --- */
+.mobile-header {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  z-index: 90;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border-subtle);
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-4);
+}
+
+.mobile-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: var(--transition-fast);
+}
+
+.mobile-menu-btn:hover {
+  color: var(--text-primary);
+  background: var(--surface-2);
+  border-color: var(--border-default);
+}
+
+.mobile-menu-btn:focus-visible {
+  outline: 2px solid var(--nebula-purple);
+  outline-offset: 2px;
+}
+
+.mobile-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.mobile-brand-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--nebula-purple), var(--electric-violet));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mobile-brand-name {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* --- Sidebar close button (hidden on desktop) --- */
+.sidebar-close-btn {
+  display: none;
+  margin-left: auto;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: var(--transition-fast);
+}
+
+.sidebar-close-btn:hover {
+  color: var(--text-primary);
+  background: var(--surface-2);
+}
+
+.sidebar-close-btn:focus-visible {
+  outline: 2px solid var(--nebula-purple);
+  outline-offset: 2px;
+}
+
+/* --- Sidebar overlay backdrop --- */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  z-index: 99;
+  cursor: pointer;
+}
+
+/* --- Table wrapper overflow --- */
+.table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+}
+
+/* --- Code block overflow --- */
+.code-block-pre {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* --- ConfirmDialog safe area --- */
+.dialog-box {
+  max-height: 90dvh;
+  overflow-y: auto;
+}
+
+/* ============================================================
+   BREAKPOINT: max-width 768px (mobile)
+   ============================================================ */
+
 @media (max-width: 768px) {
   :root { --sidebar-width: 0px; }
+
+  /* Show mobile header */
+  .mobile-header { display: flex; }
+
+  /* Show sidebar close button */
+  .sidebar-close-btn { display: flex; }
 
   .app-sidebar {
     transform: translateX(-100%);
     transition: transform 0.3s ease;
     box-shadow: var(--shadow-lg);
+    z-index: 200 !important;
   }
 
-  .app-sidebar.open { transform: translateX(0); }
+  .app-sidebar.open { 
+    transform: translateX(0) !important;
+    z-index: 201 !important;
+  }
 
-  .app-content { margin-left: 0; }
+  .app-content {
+    margin-left: 0;
+    /* Push content below mobile header */
+    padding-top: 56px;
+  }
 
   .page-wrapper { padding: var(--space-4); }
 
@@ -1833,7 +1988,68 @@ ul, ol { list-style: none; }
   .data-table { font-size: 0.8125rem; }
   .data-table th, .data-table td { padding: 8px 10px; }
 
-  .login-panel { padding: var(--space-6); }
+  /* Better mobile text handling for long URLs/paths */
+  .data-table .endpoint-cell { 
+    max-width: 180px;
+    font-size: 0.75rem;
+  }
+
+  /* Stack code samples vertically */
+  .samples-row { flex-direction: column !important; }
+
+  .login-panel { padding: var(--space-6); margin: var(--space-4); }
+
+  /* Prevent overflow on detail pages */
+  .max-w-3xl, .max-w-2xl { max-width: 100%; }
+
+  /* Workflow buttons wrap on mobile */
+  .workflow-actions { flex-wrap: wrap; }
+
+  /* Comment input stacks on very small screens */
+  .comment-input-row { flex-direction: column; }
+  .comment-input-row .btn { align-self: flex-end; }
+
+  /* Page header actions stay accessible */
+  .page-header-actions { flex-wrap: wrap; }
+
+  /* Dialog fits viewport on mobile */
+  .dialog-box {
+    margin: var(--space-4);
+    max-width: calc(100vw - var(--space-8));
+  }
+}
+
+/* ============================================================
+   BREAKPOINT: max-width 480px (small mobile)
+   ============================================================ */
+
+@media (max-width: 480px) {
+  .page-wrapper { padding: var(--space-3); }
+
+  .page-title { font-size: 1.125rem; }
+
+  /* Hide less critical table columns on very small screens */
+  .data-table .col-updated,
+  .data-table .col-creator { display: none; }
+
+  .login-panel { padding: var(--space-5); margin: var(--space-3); }
+
+  .filter-bar { gap: var(--space-2); }
+
+  /* Workflow buttons full-width on tiny screens */
+  .workflow-btn { flex: 1; justify-content: center; min-width: 120px; }
+}
+
+/* ============================================================
+   BREAKPOINT: min-width 1024px (desktop+)
+   ============================================================ */
+
+@media (min-width: 1024px) {
+  /* Ensure mobile header never shows on desktop */
+  .mobile-header { display: none !important; }
+  .sidebar-close-btn { display: none !important; }
+
+  .page-wrapper { padding: var(--space-6) var(--space-8); }
 }
 
 /* ============================================================

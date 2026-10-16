@@ -2,6 +2,11 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/authContext';
 import { useTheme } from '../store/themeContext';
 
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
 function getInitials(name: string): string {
   return name
     .split(' ')
@@ -64,19 +69,39 @@ function MoonIcon() {
   );
 }
 
-export default function Sidebar() {
+function CloseIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+
+  console.log('Sidebar render, isOpen:', isOpen);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
+  // Close sidebar after navigation on mobile
+  const handleNavClick = () => {
+    onClose?.();
+  };
+
   return (
-    <aside className="app-sidebar" role="navigation" aria-label="Main navigation">
-      {/* Brand */}
+    <aside
+      id="app-sidebar"
+      className={`app-sidebar${isOpen ? ' open' : ''}`}
+      role="navigation"
+      aria-label="Main navigation"
+    >
+      {/* Brand + mobile close button */}
       <div className="sidebar-brand">
         <div className="sidebar-brand-icon">
           <ApiHubIcon />
@@ -85,6 +110,14 @@ export default function Sidebar() {
           <div className="sidebar-brand-name">API Hub</div>
           <div className="sidebar-brand-tagline">Documentation System</div>
         </div>
+        <button
+          className="sidebar-close-btn"
+          onClick={onClose}
+          type="button"
+          aria-label="Close navigation menu"
+        >
+          <CloseIcon />
+        </button>
       </div>
 
       {/* Navigation */}
@@ -92,18 +125,16 @@ export default function Sidebar() {
         <p className="sidebar-nav-label">Workspace</p>
         <NavLink
           to="/api-docs"
-          className={({ isActive }) =>
-            `sidebar-nav-item${isActive ? ' active' : ''}`
-          }
+          className={({ isActive }) => `sidebar-nav-item${isActive ? ' active' : ''}`}
+          onClick={handleNavClick}
         >
           <BookIcon />
           API Docs
         </NavLink>
         <NavLink
           to="/issues"
-          className={({ isActive }) =>
-            `sidebar-nav-item${isActive ? ' active' : ''}`
-          }
+          className={({ isActive }) => `sidebar-nav-item${isActive ? ' active' : ''}`}
+          onClick={handleNavClick}
         >
           <IssueIcon />
           Issues
