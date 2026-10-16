@@ -45,10 +45,11 @@ function LogoutIcon() {
 
 function ApiHubIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <img 
+      src="/logo.png" 
+      alt="API Hub logo" 
+      style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.5)' }}
+    />
   );
 }
 
@@ -81,8 +82,6 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-
-  console.log('Sidebar render, isOpen:', isOpen);
 
   const handleLogout = () => {
     logout();

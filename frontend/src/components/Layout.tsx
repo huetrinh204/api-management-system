@@ -12,27 +12,19 @@ function MenuIcon() {
 
 function ApiHubIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <img 
+      src="/logo.png" 
+      alt="API Hub logo" 
+      style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.2)' }}
+    />
   );
 }
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const openSidebar = useCallback(() => {
-    console.log('openSidebar called, setting sidebarOpen to true');
-    setSidebarOpen(true);
-  }, []);
-  
-  const closeSidebar = useCallback(() => {
-    console.log('closeSidebar called, setting sidebarOpen to false');
-    setSidebarOpen(false);
-  }, []);
-
-  console.log('Layout render, sidebarOpen:', sidebarOpen);
+  const openSidebar = useCallback(() => setSidebarOpen(true), []);
+  const closeSidebar = useCallback(() => setSidebarOpen(false), []);
 
   // Close sidebar when resizing to desktop
   useEffect(() => {

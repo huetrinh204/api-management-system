@@ -740,13 +740,15 @@ ul, ol { list-style: none; }
 .sidebar-brand-icon {
   width: 36px;
   height: 36px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
   background: linear-gradient(135deg, var(--nebula-purple), var(--electric-violet));
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   box-shadow: var(--shadow-glow-purple);
+  overflow: hidden;
+  padding: 4px;
 }
 
 .sidebar-brand-name {
@@ -1736,13 +1738,15 @@ ul, ol { list-style: none; }
 .login-logo-icon {
   width: 44px;
   height: 44px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-full);
   background: linear-gradient(135deg, var(--nebula-purple), var(--electric-violet));
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: var(--shadow-glow-purple);
   animation: nebulaPulse 4s ease-in-out infinite;
+  overflow: hidden;
+  padding: 6px;
 }
 
 .login-logo-text { }
@@ -1872,12 +1876,14 @@ ul, ol { list-style: none; }
 .mobile-brand-icon {
   width: 30px;
   height: 30px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
   background: linear-gradient(135deg, var(--nebula-purple), var(--electric-violet));
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
+  padding: 3px;
 }
 
 .mobile-brand-name {
