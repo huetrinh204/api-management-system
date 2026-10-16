@@ -1,6 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import './index.css';
+import { ThemeProvider } from './store/themeContext';
 import { AuthProvider } from './store/authContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
@@ -14,7 +16,9 @@ import IssueFormPage from './pages/IssueFormPage';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
+    <ThemeProvider>
     <AuthProvider>
+
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
@@ -43,5 +47,6 @@ createRoot(document.getElementById('root')!).render(
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+    </ThemeProvider>
   </StrictMode>
 );

@@ -1,13 +1,16 @@
 import { Outlet } from 'react-router-dom';
-import Navbar from './Navbar';
+import Sidebar from './Sidebar';
 
 export default function Layout() {
   return (
-    <>
-      <Navbar />
-      <main style={{ padding: '24px' }}>
-        <Outlet />
-      </main>
-    </>
+    <div className="app-shell">
+      <Sidebar />
+      <div className="app-content">
+        <div className="nebula-accent" aria-hidden="true" />
+        <main className="page-wrapper">
+          <Outlet />
+        </main>
+      </div>
+    </div>
   );
 }

@@ -5,10 +5,35 @@ import { getCommentsByApiDoc, createCommentOnApiDoc, deleteComment } from '../ap
 import { getIssuesByApiDoc } from '../api/issueApi';
 import { useAuth } from '../store/authContext';
 import type { ApiDoc, Comment, Issue } from '../types';
+import { MethodBadge, DocStatusBadge, IssueStatusBadge, PriorityBadge } from '../components/ui/Badge';
+import Button from '../components/ui/Button';
+import CodeBlock from '../components/ui/CodeBlock';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
+import CommentSection from '../components/CommentSection';
 
-const METHOD_COLORS: Record<string, string> = {
-  GET: '#22c55e', POST: '#3b82f6', PUT: '#f59e0b', PATCH: '#8b5cf6', DELETE: '#ef4444',
-};
+function PlusIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function EditIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', {
+    month: 'long', day: 'numeric', year: 'numeric',
+  });
+}
 
 export default function ApiDocDetailPage() {
   const { id } = useParams();
@@ -17,155 +42,201 @@ export default function ApiDocDetailPage() {
   const [doc, setDoc] = useState<ApiDoc | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [issues, setIssues] = useState<Issue[]>([]);
-  const [newComment, setNewComment] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [deleteDialog, setDeleteDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const canEdit = user?.role === 'BA' || user?.role === 'Backend Developer';
   const canDelete = user?.role === 'BA';
 
   useEffect(() => {
     const docId = Number(id);
-    getApiDoc(docId).then(r => setDoc(r.data)).catch(() => navigate('/api-docs'));
-    getCommentsByApiDoc(docId).then(r => setComments(r.data));
-    getIssuesByApiDoc(docId).then(r => setIssues(r.data));
+    setLoading(true);
+    Promise.all([
+      getApiDoc(docId),
+      getCommentsByApiDoc(docId),
+      getIssuesByApiDoc(docId),
+    ])
+      .then(([docRes, commentsRes, issuesRes]) => {
+        setDoc(docRes.data);
+        setComments(commentsRes.data);
+        setIssues(issuesRes.data);
+      })
+      .catch(() => navigate('/api-docs'))
+      .finally(() => setLoading(false));
   }, [id, navigate]);
 
   async function handleDeleteDoc() {
-    if (!confirm(`Xóa tài liệu "${doc?.name}"?`)) return;
-    await deleteApiDoc(Number(id));
-    navigate('/api-docs');
+    setDeleting(true);
+    try {
+      await deleteApiDoc(Number(id));
+      navigate('/api-docs');
+    } finally {
+      setDeleting(false);
+    }
   }
 
-  async function handleAddComment(e: React.FormEvent) {
-    e.preventDefault();
-    if (!newComment.trim()) return;
-    setSubmitting(true);
-    try {
-      const res = await createCommentOnApiDoc(Number(id), newComment);
-      setComments(prev => [...prev, res.data]);
-      setNewComment('');
-    } finally {
-      setSubmitting(false);
-    }
+  async function handleAddComment(content: string) {
+    const res = await createCommentOnApiDoc(Number(id), content);
+    setComments((prev) => [...prev, res.data]);
   }
 
   async function handleDeleteComment(commentId: number) {
     await deleteComment(commentId);
-    setComments(prev => prev.filter(c => c.id !== commentId));
+    setComments((prev) => prev.filter((c) => c.id !== commentId));
   }
 
-  if (!doc) return <p>Đang tải...</p>;
-
-  const cardStyle = { background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16, marginBottom: 16 };
+  if (loading) return <LoadingSpinner label="Loading API documentation..." />;
+  if (!doc) return null;
 
   return (
-    <div style={{ maxWidth: 860 }}>
+    <div className="max-w-3xl">
+      {/* Back link */}
+      <Link to="/api-docs" className="page-back-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Back to API Docs
+      </Link>
+
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <span style={{ background: METHOD_COLORS[doc.method], color: '#fff', padding: '3px 10px',
-              borderRadius: 4, fontWeight: 'bold', fontSize: 13 }}>{doc.method}</span>
-            <code style={{ fontSize: 16, fontWeight: 'bold' }}>{doc.endpoint}</code>
+      <div className="page-header">
+        <div className="page-header-left min-w-0">
+          <div className="flex items-center gap-3 mb-2 flex-wrap">
+            <MethodBadge method={doc.method} />
+            <DocStatusBadge status={doc.status} />
           </div>
-          <h2 style={{ margin: 0 }}>{doc.name}</h2>
+          <h1 className="page-title">{doc.name}</h1>
+          <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'block', wordBreak: 'break-all' }}>
+            {doc.endpoint}
+          </code>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="page-header-actions">
           {canEdit && (
-            <button onClick={() => navigate(`/api-docs/${id}/edit`)}
-              style={{ padding: '6px 14px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-              Sửa
-            </button>
+            <Button variant="warning" size="sm" leftIcon={<EditIcon />} onClick={() => navigate(`/api-docs/${id}/edit`)}>
+              Edit
+            </Button>
           )}
           {canDelete && (
-            <button onClick={handleDeleteDoc}
-              style={{ padding: '6px 14px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-              Xóa
-            </button>
+            <Button variant="danger" size="sm" onClick={() => setDeleteDialog(true)}>
+              Delete
+            </Button>
           )}
         </div>
       </div>
 
-      {/* Chi tiết */}
-      <div style={cardStyle}>
-        <p><strong>Mô tả:</strong> {doc.description}</p>
-        <p style={{ margin: 0 }}><strong>Trạng thái:</strong> {doc.status} &nbsp;|&nbsp; <strong>Người tạo:</strong> {doc.creator?.name || '-'}</p>
+      {/* Meta info */}
+      <div className="card mb-5">
+        <div className="card-body">
+          <div className="detail-meta-grid">
+            <div className="detail-meta-item">
+              <div className="detail-meta-label">Description</div>
+              <div className="detail-meta-value" style={{ whiteSpace: 'pre-wrap', color: 'var(--text-secondary)', fontWeight: 400 }}>
+                {doc.description || '—'}
+              </div>
+            </div>
+            <div className="detail-meta-item">
+              <div className="detail-meta-label">Created By</div>
+              <div className="detail-meta-value">{doc.creator?.name || '—'}</div>
+            </div>
+            <div className="detail-meta-item">
+              <div className="detail-meta-label">Created</div>
+              <div className="detail-meta-value">{formatDate(doc.createdAt)}</div>
+            </div>
+            <div className="detail-meta-item">
+              <div className="detail-meta-label">Last Updated</div>
+              <div className="detail-meta-value">{formatDate(doc.updatedAt)}</div>
+            </div>
+          </div>
+        </div>
       </div>
 
+      {/* Request / Response samples */}
       {(doc.request_sample || doc.response_sample) && (
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-          {doc.request_sample && (
-            <div style={{ flex: 1, ...cardStyle, margin: 0 }}>
-              <strong>Request mẫu:</strong>
-              <pre style={{ marginTop: 8, overflow: 'auto', fontSize: 13 }}>{doc.request_sample}</pre>
+        <div className="flex gap-4 mb-5" style={{ flexWrap: 'wrap' }}>
+          {doc.request_sample !== undefined && (
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+                Request Sample
+              </p>
+              <CodeBlock code={doc.request_sample} lang="JSON" emptyText="No request sample provided" />
             </div>
           )}
-          {doc.response_sample && (
-            <div style={{ flex: 1, ...cardStyle, margin: 0 }}>
-              <strong>Response mẫu:</strong>
-              <pre style={{ marginTop: 8, overflow: 'auto', fontSize: 13 }}>{doc.response_sample}</pre>
+          {doc.response_sample !== undefined && (
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+                Response Sample
+              </p>
+              <CodeBlock code={doc.response_sample} lang="JSON" emptyText="No response sample provided" />
             </div>
           )}
         </div>
       )}
 
-      {/* Issues liên quan */}
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <h3 style={{ margin: 0 }}>Issues ({issues.length})</h3>
-          <Link to={`/api-docs/${id}/issues/new`}
-            style={{ padding: '5px 12px', background: '#3b82f6', color: '#fff', borderRadius: 4, textDecoration: 'none', fontSize: 13 }}>
-            + Tạo Issue
+      {/* Related Issues */}
+      <div className="card mb-5">
+        <div className="card-header">
+          <h2 className="card-title">
+            Issues
+            <span className="badge badge-draft" style={{ fontSize: '0.6875rem', marginLeft: '8px' }}>{issues.length}</span>
+          </h2>
+          <Link to={`/api-docs/${id}/issues/new`} className="btn btn-primary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <PlusIcon /> New Issue
           </Link>
         </div>
-        {issues.length === 0
-          ? <p style={{ color: '#94a3b8', fontSize: 14 }}>Chưa có issue nào</p>
-          : issues.slice(0, 5).map(issue => (
-            <div key={issue.id} style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: 6, marginBottom: 6, display: 'flex', justifyContent: 'space-between' }}>
-              <Link to={`/issues/${issue.id}`} style={{ color: '#1e293b', textDecoration: 'none', fontWeight: 500 }}>
-                {issue.title}
-              </Link>
-              <span style={{ fontSize: 12, color: '#64748b' }}>{issue.priority} · {issue.status}</span>
+        <div className="card-body" style={{ padding: issues.length === 0 ? 0 : '12px 20px' }}>
+          {issues.length === 0 ? (
+            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '0.875rem' }}>
+              No issues linked to this API yet.
             </div>
-          ))
-        }
-        {issues.length > 5 && (
-          <Link to={`/issues?apiDocId=${id}`} style={{ fontSize: 13, color: '#3b82f6' }}>Xem tất cả {issues.length} issues →</Link>
-        )}
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {issues.slice(0, 5).map((issue) => (
+                <Link
+                  key={issue.id}
+                  to={`/issues/${issue.id}`}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: 'var(--surface-2)', borderRadius: '6px', border: '1px solid var(--border-subtle)', textDecoration: 'none', transition: 'border-color 0.15s' }}
+                >
+                  <span style={{ fontWeight: 500, color: 'var(--text-primary)', fontSize: '0.875rem' }}>{issue.title}</span>
+                  <div className="flex items-center gap-2">
+                    <PriorityBadge priority={issue.priority} />
+                    <IssueStatusBadge status={issue.status} />
+                  </div>
+                </Link>
+              ))}
+              {issues.length > 5 && (
+                <p style={{ textAlign: 'center', fontSize: '0.8125rem', color: 'var(--text-link)', marginTop: '4px' }}>
+                  + {issues.length - 5} more issues
+                </p>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Comments */}
-      <div>
-        <h3>Bình luận ({comments.length})</h3>
-        <div style={{ marginBottom: 16 }}>
-          {comments.map(c => (
-            <div key={c.id} style={{ padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 6, marginBottom: 8 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <strong style={{ fontSize: 13 }}>{c.author?.name || 'Ẩn danh'}</strong>
-                <span style={{ fontSize: 12, color: '#94a3b8' }}>
-                  {new Date(c.createdAt).toLocaleString('vi-VN')}
-                  {c.user_id === user?.id && (
-                    <button onClick={() => handleDeleteComment(c.id)}
-                      style={{ marginLeft: 8, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12 }}>
-                      Xóa
-                    </button>
-                  )}
-                </span>
-              </div>
-              <p style={{ margin: 0, fontSize: 14 }}>{c.content}</p>
-            </div>
-          ))}
+      <div className="card mb-5">
+        <div className="card-body">
+          <CommentSection
+            comments={comments}
+            currentUserId={user?.id}
+            onAddComment={handleAddComment}
+            onDeleteComment={handleDeleteComment}
+          />
         </div>
-        <form onSubmit={handleAddComment} style={{ display: 'flex', gap: 8 }}>
-          <textarea value={newComment} onChange={e => setNewComment(e.target.value)}
-            placeholder="Viết bình luận..." rows={2}
-            style={{ flex: 1, padding: 8, border: '1px solid #cbd5e1', borderRadius: 4, resize: 'vertical' }} />
-          <button type="submit" disabled={submitting}
-            style={{ padding: '0 16px', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-            Gửi
-          </button>
-        </form>
       </div>
+
+      {/* Delete Confirm */}
+      <ConfirmDialog
+        isOpen={deleteDialog}
+        title="Delete API Documentation"
+        message={<>Are you sure you want to delete <strong style={{ color: 'var(--text-primary)' }}>"{doc.name}"</strong>? This cannot be undone.</>}
+        confirmLabel="Delete"
+        variant="danger"
+        isLoading={deleting}
+        onConfirm={handleDeleteDoc}
+        onCancel={() => setDeleteDialog(false)}
+      />
     </div>
   );
 }

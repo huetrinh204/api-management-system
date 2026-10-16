@@ -4,11 +4,9 @@ import { getIssue, updateIssueStatus } from '../api/issueApi';
 import { getCommentsByIssue, createCommentOnIssue, deleteComment } from '../api/commentApi';
 import { useAuth } from '../store/authContext';
 import type { Issue, Comment, IssueStatus, UserRole } from '../types';
-
-const STATUS_COLOR: Record<string, string> = {
-  'Open': '#3b82f6', 'In Progress': '#f59e0b', 'Resolved': '#22c55e',
-  'Closed': '#64748b', 'Reopened': '#8b5cf6',
-};
+import { IssueStatusBadge, PriorityBadge } from '../components/ui/Badge';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
+import CommentSection from '../components/CommentSection';
 
 // Các chuyển trạng thái hợp lệ theo role
 function getAllowedTransitions(current: IssueStatus, role: UserRole): IssueStatus[] {
@@ -27,20 +25,58 @@ function getAllowedTransitions(current: IssueStatus, role: UserRole): IssueStatu
     .map(t => t.to);
 }
 
+function getWorkflowBtnClass(status: IssueStatus): string {
+  const map: Record<string, string> = {
+    'In Progress': 'workflow-btn workflow-btn-inprogress',
+    'Resolved':    'workflow-btn workflow-btn-resolved',
+    'Closed':      'workflow-btn workflow-btn-closed',
+    'Reopened':    'workflow-btn workflow-btn-reopened',
+  };
+  return map[status] ?? 'workflow-btn';
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', {
+    month: 'long', day: 'numeric', year: 'numeric',
+  });
+}
+
+function formatDateTime(iso: string) {
+  return new Date(iso).toLocaleString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
+function ArrowIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export default function IssueDetailPage() {
   const { id } = useParams();
   const { user } = useAuth();
   const [issue, setIssue] = useState<Issue | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [newComment, setNewComment] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [statusLoading, setStatusLoading] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const issueId = Number(id);
-    getIssue(issueId).then(r => setIssue(r.data));
-    getCommentsByIssue(issueId).then(r => setComments(r.data));
+    setLoading(true);
+    Promise.all([
+      getIssue(issueId),
+      getCommentsByIssue(issueId),
+    ])
+      .then(([issueRes, commentsRes]) => {
+        setIssue(issueRes.data);
+        setComments(commentsRes.data);
+      })
+      .finally(() => setLoading(false));
   }, [id]);
 
   async function handleStatusChange(newStatus: IssueStatus) {
@@ -52,23 +88,15 @@ export default function IssueDetailPage() {
       setIssue(res.data);
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
-      setError(msg || 'Chuyển trạng thái thất bại');
+      setError(msg || 'Failed to update status. Please try again.');
     } finally {
       setStatusLoading(false);
     }
   }
 
-  async function handleAddComment(e: React.FormEvent) {
-    e.preventDefault();
-    if (!newComment.trim()) return;
-    setSubmitting(true);
-    try {
-      const res = await createCommentOnIssue(Number(id), newComment);
-      setComments(prev => [...prev, res.data]);
-      setNewComment('');
-    } finally {
-      setSubmitting(false);
-    }
+  async function handleAddComment(content: string) {
+    const res = await createCommentOnIssue(Number(id), content);
+    setComments(prev => [...prev, res.data]);
   }
 
   async function handleDeleteComment(commentId: number) {
@@ -76,83 +104,102 @@ export default function IssueDetailPage() {
     setComments(prev => prev.filter(c => c.id !== commentId));
   }
 
-  if (!issue) return <p>Đang tải...</p>;
+  if (loading) return <LoadingSpinner label="Loading issue..." />;
+  if (!issue) return null;
 
   const allowedTransitions = user ? getAllowedTransitions(issue.status, user.role) : [];
-  const cardStyle = { background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: 16, marginBottom: 16 };
 
   return (
-    <div style={{ maxWidth: 760 }}>
+    <div className="max-w-3xl">
+      {/* Back link */}
+      <Link to="/issues" className="page-back-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Back to Issues
+      </Link>
+
       {/* Header */}
-      <div style={{ marginBottom: 20 }}>
-        <Link to="/issues" style={{ color: '#64748b', fontSize: 13 }}>← Danh sách Issues</Link>
-        <h2 style={{ margin: '8px 0 4px' }}>{issue.title}</h2>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={{ background: STATUS_COLOR[issue.status] + '22', color: STATUS_COLOR[issue.status],
-            padding: '3px 10px', borderRadius: 12, fontSize: 13, fontWeight: 600 }}>
-            {issue.status}
-          </span>
-          <span style={{ fontSize: 13, color: '#64748b' }}>Priority: <strong>{issue.priority}</strong></span>
-          <span style={{ fontSize: 13, color: '#64748b' }}>Tạo bởi: {issue.creator?.name || '-'}</span>
-          {issue.assignee && <span style={{ fontSize: 13, color: '#64748b' }}>Phụ trách: {issue.assignee.name}</span>}
+      <div className="page-header" style={{ marginBottom: '16px' }}>
+        <div className="page-header-left min-w-0">
+          <h1 className="page-title">{issue.title}</h1>
         </div>
       </div>
 
-      {/* Mô tả */}
-      <div style={cardStyle}>
-        <strong>Mô tả:</strong>
-        <p style={{ margin: '8px 0 0', whiteSpace: 'pre-wrap' }}>{issue.description}</p>
+      {/* Status + Meta */}
+      <div className="card mb-4">
+        <div className="card-body">
+          <div className="flex items-center gap-3 mb-4 flex-wrap">
+            <IssueStatusBadge status={issue.status} />
+            <PriorityBadge priority={issue.priority} />
+          </div>
+          <div className="detail-meta-grid">
+            <div className="detail-meta-item">
+              <div className="detail-meta-label">Created By</div>
+              <div className="detail-meta-value">{issue.creator?.name || '—'}</div>
+            </div>
+            {issue.assignee && (
+              <div className="detail-meta-item">
+                <div className="detail-meta-label">Assignee</div>
+                <div className="detail-meta-value">{issue.assignee.name}</div>
+              </div>
+            )}
+            <div className="detail-meta-item">
+              <div className="detail-meta-label">Created</div>
+              <div className="detail-meta-value">{formatDate(issue.createdAt)}</div>
+            </div>
+            <div className="detail-meta-item">
+              <div className="detail-meta-label">Last Updated</div>
+              <div className="detail-meta-value">{formatDateTime(issue.updatedAt)}</div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Chuyển trạng thái */}
+      {/* Description */}
+      <div className="card mb-4">
+        <div className="card-body">
+          <div className="detail-meta-label mb-2">Description</div>
+          <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7, whiteSpace: 'pre-wrap', margin: 0, fontSize: '0.875rem' }}>
+            {issue.description}
+          </p>
+        </div>
+      </div>
+
+      {/* Status transitions */}
       {allowedTransitions.length > 0 && (
-        <div style={{ marginBottom: 20 }}>
-          <strong style={{ fontSize: 14 }}>Chuyển trạng thái:</strong>
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+        <div className="workflow-section">
+          <div className="workflow-title">Transition Status</div>
+          <div className="workflow-actions">
             {allowedTransitions.map(s => (
-              <button key={s} onClick={() => handleStatusChange(s)} disabled={statusLoading}
-                style={{ padding: '6px 14px', background: STATUS_COLOR[s], color: '#fff',
-                  border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 13 }}>
-                → {s}
+              <button
+                key={s}
+                className={getWorkflowBtnClass(s)}
+                onClick={() => handleStatusChange(s)}
+                disabled={statusLoading}
+                type="button"
+              >
+                <ArrowIcon />
+                {s}
               </button>
             ))}
           </div>
-          {error && <p style={{ color: 'red', fontSize: 13, marginTop: 8 }}>{error}</p>}
+          {error && (
+            <div className="alert alert-error mt-4" role="alert">{error}</div>
+          )}
         </div>
       )}
 
       {/* Comments */}
-      <div>
-        <h3>Bình luận ({comments.length})</h3>
-        <div style={{ marginBottom: 16 }}>
-          {comments.map(c => (
-            <div key={c.id} style={{ padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: 6, marginBottom: 8 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <strong style={{ fontSize: 13 }}>{c.author?.name || 'Ẩn danh'}</strong>
-                <span style={{ fontSize: 12, color: '#94a3b8' }}>
-                  {new Date(c.createdAt).toLocaleString('vi-VN')}
-                  {c.user_id === user?.id && (
-                    <button onClick={() => handleDeleteComment(c.id)}
-                      style={{ marginLeft: 8, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12 }}>
-                      Xóa
-                    </button>
-                  )}
-                </span>
-              </div>
-              <p style={{ margin: 0, fontSize: 14 }}>{c.content}</p>
-            </div>
-          ))}
-          {comments.length === 0 && <p style={{ color: '#94a3b8', fontSize: 14 }}>Chưa có bình luận nào</p>}
+      <div className="card mb-5">
+        <div className="card-body">
+          <CommentSection
+            comments={comments}
+            currentUserId={user?.id}
+            onAddComment={handleAddComment}
+            onDeleteComment={handleDeleteComment}
+          />
         </div>
-        <form onSubmit={handleAddComment} style={{ display: 'flex', gap: 8 }}>
-          <textarea value={newComment} onChange={e => setNewComment(e.target.value)}
-            placeholder="Viết bình luận..." rows={2}
-            style={{ flex: 1, padding: 8, border: '1px solid #cbd5e1', borderRadius: 4, resize: 'vertical' }} />
-          <button type="submit" disabled={submitting}
-            style={{ padding: '0 16px', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-            Gửi
-          </button>
-        </form>
       </div>
     </div>
   );

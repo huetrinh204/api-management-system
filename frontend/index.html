@@ -1,12 +1,27 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>API Doc Management</title>
+    <meta name="description" content="API Hub — Internal API documentation and issue management platform for software development teams." />
+    <title>API Hub — API Documentation Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <script>
+      // Prevent flash of wrong theme on page load
+      (function() {
+        try {
+          var t = localStorage.getItem('apihub-theme');
+          if (t === 'light' || t === 'dark') {
+            document.documentElement.setAttribute('data-theme', t);
+          }
+        } catch(e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+

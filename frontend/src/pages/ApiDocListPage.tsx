@@ -3,11 +3,37 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getApiDocs, deleteApiDoc } from '../api/apiDocApi';
 import { useAuth } from '../store/authContext';
 import type { ApiDoc } from '../types';
+import { MethodBadge, DocStatusBadge } from '../components/ui/Badge';
+import Button from '../components/ui/Button';
+import EmptyState from '../components/ui/EmptyState';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 
-const METHOD_COLORS: Record<string, string> = {
-  GET: '#22c55e', POST: '#3b82f6', PUT: '#f59e0b',
-  PATCH: '#8b5cf6', DELETE: '#ef4444',
-};
+function PlusIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.5" />
+      <path d="m21 21-4.35-4.35" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function BookIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 19.5A2.5 2.5 0 016.5 17H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 export default function ApiDocListPage() {
   const [docs, setDocs] = useState<ApiDoc[]>([]);
@@ -15,6 +41,10 @@ export default function ApiDocListPage() {
   const [method, setMethod] = useState('');
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<ApiDoc | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -23,6 +53,7 @@ export default function ApiDocListPage() {
 
   async function fetchDocs() {
     setLoading(true);
+    setFetchError('');
     try {
       const res = await getApiDocs({
         search: search || undefined,
@@ -31,110 +62,202 @@ export default function ApiDocListPage() {
       });
       setDocs(res.data);
     } catch {
-      alert('Không thể tải danh sách API');
+      setFetchError('Failed to load API documentation. Please try again.');
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => { fetchDocs(); }, []);
+  useEffect(() => { fetchDocs(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function handleDelete(id: number, name: string) {
-    if (!confirm(`Xóa tài liệu "${name}"?`)) return;
+  async function handleDeleteConfirm() {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await deleteApiDoc(id);
-      setDocs(prev => prev.filter(d => d.id !== id));
+      await deleteApiDoc(deleteTarget.id);
+      setDocs((prev) => prev.filter((d) => d.id !== deleteTarget.id));
+      setDeleteTarget(null);
     } catch {
-      alert('Xóa thất bại');
+      setFetchError(`Failed to delete "${deleteTarget.name}". Please try again.`);
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
     }
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') fetchDocs();
+  };
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h2 style={{ margin: 0 }}>Tài liệu API</h2>
+      {/* Page Header */}
+      <div className="page-header">
+        <div className="page-header-left">
+          <h1 className="page-title">API Documentation</h1>
+          <p className="page-subtitle">Browse and manage your team's API contracts</p>
+        </div>
         {canCreate && (
-          <button onClick={() => navigate('/api-docs/new')}
-            style={{ padding: '8px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}>
-            + Tạo mới
-          </button>
+          <Button variant="primary" leftIcon={<PlusIcon />} onClick={() => navigate('/api-docs/new')}>
+            New API Doc
+          </Button>
         )}
       </div>
 
-      {/* Bộ lọc */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-        <input placeholder="Tìm tên hoặc endpoint..." value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={{ padding: '6px 10px', border: '1px solid #cbd5e1', borderRadius: 4, flex: 1, minWidth: 200 }} />
-        <select value={method} onChange={e => setMethod(e.target.value)}
-          style={{ padding: '6px 10px', border: '1px solid #cbd5e1', borderRadius: 4 }}>
-          <option value="">Tất cả Method</option>
-          {['GET','POST','PUT','PATCH','DELETE'].map(m => <option key={m}>{m}</option>)}
+      {/* Error Banner */}
+      {fetchError && (
+        <div className="alert alert-error mb-4" role="alert">{fetchError}</div>
+      )}
+
+      {/* Filter Bar */}
+      <div className="filter-bar">
+        <div className="input-wrapper filter-search">
+          <span className="input-icon-left"><SearchIcon /></span>
+          <input
+            type="search"
+            className="form-input has-icon-left"
+            placeholder="Search name or endpoint..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={handleKeyDown}
+            aria-label="Search API docs"
+          />
+        </div>
+        <select
+          className="form-select filter-select"
+          value={method}
+          onChange={(e) => setMethod(e.target.value)}
+          aria-label="Filter by HTTP method"
+        >
+          <option value="">All Methods</option>
+          {['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].map((m) => (
+            <option key={m}>{m}</option>
+          ))}
         </select>
-        <select value={status} onChange={e => setStatus(e.target.value)}
-          style={{ padding: '6px 10px', border: '1px solid #cbd5e1', borderRadius: 4 }}>
-          <option value="">Tất cả Status</option>
-          {['Draft','Active','Deprecated'].map(s => <option key={s}>{s}</option>)}
+        <select
+          className="form-select filter-select"
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          aria-label="Filter by status"
+        >
+          <option value="">All Statuses</option>
+          {['Draft', 'Active', 'Deprecated'].map((s) => (
+            <option key={s}>{s}</option>
+          ))}
         </select>
-        <button onClick={fetchDocs}
-          style={{ padding: '6px 16px', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-          Tìm
-        </button>
+        <Button variant="secondary" onClick={fetchDocs} aria-label="Apply filters">
+          Search
+        </Button>
       </div>
 
-      {loading ? <p>Đang tải...</p> : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-          <thead>
-            <tr style={{ background: '#f1f5f9', textAlign: 'left' }}>
-              <th style={{ padding: '10px 12px' }}>Method</th>
-              <th style={{ padding: '10px 12px' }}>Endpoint</th>
-              <th style={{ padding: '10px 12px' }}>Tên</th>
-              <th style={{ padding: '10px 12px' }}>Status</th>
-              <th style={{ padding: '10px 12px' }}>Người tạo</th>
-              <th style={{ padding: '10px 12px' }}>Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
-            {docs.length === 0 && (
-              <tr><td colSpan={6} style={{ padding: 16, textAlign: 'center', color: '#94a3b8' }}>Không có dữ liệu</td></tr>
-            )}
-            {docs.map(doc => (
-              <tr key={doc.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                <td style={{ padding: '10px 12px' }}>
-                  <span style={{ background: METHOD_COLORS[doc.method] || '#64748b', color: '#fff',
-                    padding: '2px 8px', borderRadius: 4, fontSize: 12, fontWeight: 'bold' }}>
-                    {doc.method}
-                  </span>
-                </td>
-                <td style={{ padding: '10px 12px', fontFamily: 'monospace' }}>{doc.endpoint}</td>
-                <td style={{ padding: '10px 12px' }}>
-                  <Link to={`/api-docs/${doc.id}`} style={{ color: '#3b82f6' }}>{doc.name}</Link>
-                </td>
-                <td style={{ padding: '10px 12px' }}>
-                  <span style={{ padding: '2px 8px', borderRadius: 12, fontSize: 12,
-                    background: doc.status === 'Active' ? '#dcfce7' : doc.status === 'Deprecated' ? '#fee2e2' : '#f1f5f9',
-                    color: doc.status === 'Active' ? '#166534' : doc.status === 'Deprecated' ? '#991b1b' : '#475569' }}>
-                    {doc.status}
-                  </span>
-                </td>
-                <td style={{ padding: '10px 12px', color: '#64748b' }}>{doc.creator?.name || '-'}</td>
-                <td style={{ padding: '10px 12px' }}>
-                  <Link to={`/api-docs/${doc.id}`} style={{ marginRight: 8, color: '#3b82f6', fontSize: 13 }}>Xem</Link>
-                  {canCreate && (
-                    <Link to={`/api-docs/${doc.id}/edit`} style={{ marginRight: 8, color: '#f59e0b', fontSize: 13 }}>Sửa</Link>
-                  )}
-                  {canDelete && (
-                    <button onClick={() => handleDelete(doc.id, doc.name)}
-                      style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 }}>
-                      Xóa
-                    </button>
-                  )}
-                </td>
+      {/* Table */}
+      {loading ? (
+        <LoadingSpinner label="Loading API docs..." />
+      ) : (
+        <div className="table-wrapper">
+          <table className="data-table" aria-label="API documentation list">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Endpoint</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Created By</th>
+                <th>Updated</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {docs.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ padding: 0, border: 'none' }}>
+                    <EmptyState
+                      icon={<BookIcon />}
+                      title={search || method || status ? 'No results found' : 'No API docs yet'}
+                      description={
+                        search || method || status
+                          ? 'Try adjusting your search or filter criteria.'
+                          : canCreate
+                          ? 'Create your first API documentation to get started.'
+                          : 'No API documentation has been created yet.'
+                      }
+                      action={
+                        canCreate && !search && !method && !status ? (
+                          <Button variant="primary" leftIcon={<PlusIcon />} onClick={() => navigate('/api-docs/new')}>
+                            New API Doc
+                          </Button>
+                        ) : undefined
+                      }
+                    />
+                  </td>
+                </tr>
+              ) : (
+                docs.map((doc) => (
+                  <tr key={doc.id}>
+                    <td><MethodBadge method={doc.method} /></td>
+                    <td className="endpoint-cell" title={doc.endpoint}>
+                      <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+                        {doc.endpoint}
+                      </code>
+                    </td>
+                    <td>
+                      <Link to={`/api-docs/${doc.id}`} style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
+                        {doc.name}
+                      </Link>
+                    </td>
+                    <td><DocStatusBadge status={doc.status} /></td>
+                    <td style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                      {doc.creator?.name || '—'}
+                    </td>
+                    <td style={{ color: 'var(--text-tertiary)', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
+                      {new Date(doc.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </td>
+                    <td className="actions-cell">
+                      <div className="flex gap-2">
+                        <Link to={`/api-docs/${doc.id}`} className="btn btn-ghost btn-sm">
+                          View
+                        </Link>
+                        {canCreate && (
+                          <Link to={`/api-docs/${doc.id}/edit`} className="btn btn-warning btn-sm">
+                            Edit
+                          </Link>
+                        )}
+                        {canDelete && (
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() => setDeleteTarget(doc)}
+                            aria-label={`Delete ${doc.name}`}
+                          >
+                            Delete
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
+
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(deleteTarget)}
+        title="Delete API Documentation"
+        message={
+          <>
+            Are you sure you want to delete <strong style={{ color: 'var(--text-primary)' }}>"{deleteTarget?.name}"</strong>?
+            This action cannot be undone.
+          </>
+        }
+        confirmLabel="Delete"
+        variant="danger"
+        isLoading={deleting}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

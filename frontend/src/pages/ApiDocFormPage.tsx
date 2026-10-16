@@ -1,7 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { getApiDoc, createApiDoc, updateApiDoc } from '../api/apiDocApi';
 import type { HttpMethod, ApiDocStatus } from '../types';
+import Button from '../components/ui/Button';
 
 const METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 const STATUSES: ApiDocStatus[] = ['Draft', 'Active', 'Deprecated'];
@@ -18,9 +19,11 @@ export default function ApiDocFormPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [pageLoading, setPageLoading] = useState(isEdit);
 
   useEffect(() => {
     if (!isEdit) return;
+    setPageLoading(true);
     getApiDoc(Number(id)).then(res => {
       const d = res.data;
       setForm({
@@ -28,7 +31,7 @@ export default function ApiDocFormPage() {
         description: d.description, status: d.status,
         request_sample: d.request_sample || '', response_sample: d.response_sample || '',
       });
-    });
+    }).finally(() => setPageLoading(false));
   }, [id, isEdit]);
 
   const set = (field: string, value: string) => setForm(prev => ({ ...prev, [field]: value }));
@@ -51,71 +54,155 @@ export default function ApiDocFormPage() {
       navigate('/api-docs');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
-      setError(msg || 'Có lỗi xảy ra');
+      setError(msg || 'An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
   }
 
-  const inputStyle = { display: 'block', width: '100%', padding: '8px', marginTop: 4,
-    border: '1px solid #cbd5e1', borderRadius: 4, boxSizing: 'border-box' as const };
+  if (pageLoading) {
+    return (
+      <div className="loading-state">
+        <span className="spinner" />
+        <span className="text-muted text-sm">Loading form data...</span>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ maxWidth: 700 }}>
-      <h2>{isEdit ? 'Chỉnh sửa' : 'Tạo mới'} tài liệu API</h2>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div>
-          <label>Tên API *</label>
-          <input style={inputStyle} value={form.name} onChange={e => set('name', e.target.value)} required />
+    <div className="max-w-2xl">
+      {/* Back link */}
+      <Link to="/api-docs" className="page-back-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Back to API Docs
+      </Link>
+
+      <div className="page-header">
+        <div className="page-header-left">
+          <h1 className="page-title">{isEdit ? 'Edit' : 'New'} API Documentation</h1>
+          <p className="page-subtitle">
+            {isEdit ? 'Update the fields below and save your changes.' : 'Fill in the details to create a new API documentation entry.'}
+          </p>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div style={{ flex: 1 }}>
-            <label>Method *</label>
-            <select style={inputStyle} value={form.method} onChange={e => set('method', e.target.value)}>
-              {METHODS.map(m => <option key={m}>{m}</option>)}
-            </select>
-          </div>
-          <div style={{ flex: 1 }}>
-            <label>Status *</label>
-            <select style={inputStyle} value={form.status} onChange={e => set('status', e.target.value)}>
-              {STATUSES.map(s => <option key={s}>{s}</option>)}
-            </select>
-          </div>
+      </div>
+
+      <div className="card">
+        <div className="card-body">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            {/* API Name */}
+            <div className="form-group">
+              <label className="form-label form-label-required" htmlFor="api-name">API Name</label>
+              <input
+                id="api-name"
+                className="form-input"
+                value={form.name}
+                onChange={e => set('name', e.target.value)}
+                placeholder="e.g. Get User Profile"
+                required
+              />
+            </div>
+
+            {/* Method + Status row */}
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label form-label-required" htmlFor="api-method">HTTP Method</label>
+                <select
+                  id="api-method"
+                  className="form-select"
+                  value={form.method}
+                  onChange={e => set('method', e.target.value)}
+                >
+                  {METHODS.map(m => <option key={m}>{m}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label form-label-required" htmlFor="api-status">Status</label>
+                <select
+                  id="api-status"
+                  className="form-select"
+                  value={form.status}
+                  onChange={e => set('status', e.target.value)}
+                >
+                  {STATUSES.map(s => <option key={s}>{s}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {/* Endpoint */}
+            <div className="form-group">
+              <label className="form-label form-label-required" htmlFor="api-endpoint">Endpoint</label>
+              <input
+                id="api-endpoint"
+                className="form-input"
+                value={form.endpoint}
+                onChange={e => set('endpoint', e.target.value)}
+                placeholder="/api/users/:id"
+                required
+                style={{ fontFamily: 'var(--font-mono)' }}
+              />
+            </div>
+
+            {/* Description */}
+            <div className="form-group">
+              <label className="form-label form-label-required" htmlFor="api-desc">Description</label>
+              <textarea
+                id="api-desc"
+                className="form-textarea"
+                value={form.description}
+                onChange={e => set('description', e.target.value)}
+                placeholder="Describe what this API endpoint does..."
+                required
+                rows={3}
+              />
+            </div>
+
+            {/* Request Sample */}
+            <div className="form-group">
+              <label className="form-label" htmlFor="api-req-sample">Request Sample (JSON)</label>
+              <textarea
+                id="api-req-sample"
+                className="form-textarea mono-textarea"
+                value={form.request_sample}
+                onChange={e => set('request_sample', e.target.value)}
+                placeholder='{"key": "value"}'
+                rows={4}
+              />
+              <span className="form-hint">Optional — paste a sample request body in JSON format</span>
+            </div>
+
+            {/* Response Sample */}
+            <div className="form-group">
+              <label className="form-label" htmlFor="api-res-sample">Response Sample (JSON)</label>
+              <textarea
+                id="api-res-sample"
+                className="form-textarea mono-textarea"
+                value={form.response_sample}
+                onChange={e => set('response_sample', e.target.value)}
+                placeholder='{"data": [...]}'
+                rows={4}
+              />
+              <span className="form-hint">Optional — paste a sample response body in JSON format</span>
+            </div>
+
+            {/* Error */}
+            {error && (
+              <div className="alert alert-error" role="alert">{error}</div>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-3 justify-end" style={{ marginTop: '8px' }}>
+              <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" isLoading={loading}>
+                {isEdit ? 'Save Changes' : 'Create API Doc'}
+              </Button>
+            </div>
+          </form>
         </div>
-        <div>
-          <label>Endpoint *</label>
-          <input style={inputStyle} value={form.endpoint} onChange={e => set('endpoint', e.target.value)}
-            placeholder="/api/example" required />
-        </div>
-        <div>
-          <label>Mô tả *</label>
-          <textarea style={{ ...inputStyle, height: 80 }} value={form.description}
-            onChange={e => set('description', e.target.value)} required />
-        </div>
-        <div>
-          <label>Request mẫu (JSON)</label>
-          <textarea style={{ ...inputStyle, height: 100, fontFamily: 'monospace' }}
-            value={form.request_sample} onChange={e => set('request_sample', e.target.value)}
-            placeholder='{"key": "value"}' />
-        </div>
-        <div>
-          <label>Response mẫu (JSON)</label>
-          <textarea style={{ ...inputStyle, height: 100, fontFamily: 'monospace' }}
-            value={form.response_sample} onChange={e => set('response_sample', e.target.value)}
-            placeholder='{"data": [...]}' />
-        </div>
-        {error && <p style={{ color: 'red', margin: 0 }}>{error}</p>}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button type="submit" disabled={loading}
-            style={{ padding: '8px 20px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-            {loading ? 'Đang lưu...' : isEdit ? 'Cập nhật' : 'Tạo mới'}
-          </button>
-          <button type="button" onClick={() => navigate(-1)}
-            style={{ padding: '8px 20px', background: '#e2e8f0', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-            Hủy
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
   );
 }

@@ -1,11 +1,13 @@
 import { type FormEvent, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { createIssue } from '../api/issueApi';
+import type { IssuePriority } from '../types';
+import Button from '../components/ui/Button';
 
 export default function IssueFormPage() {
   const { id } = useParams(); // api doc id
   const navigate = useNavigate();
-  const [form, setForm] = useState({ title: '', description: '', priority: 'Medium' });
+  const [form, setForm] = useState({ title: '', description: '', priority: 'Medium' as IssuePriority });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -20,48 +22,91 @@ export default function IssueFormPage() {
       navigate(`/api-docs/${id}`);
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
-      setError(msg || 'Có lỗi xảy ra');
+      setError(msg || 'An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
   }
 
-  const inputStyle = { display: 'block', width: '100%', padding: '8px', marginTop: 4,
-    border: '1px solid #cbd5e1', borderRadius: 4, boxSizing: 'border-box' as const };
-
   return (
-    <div style={{ maxWidth: 600 }}>
-      <h2>Tạo Issue mới</h2>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div>
-          <label>Tiêu đề *</label>
-          <input style={inputStyle} value={form.title} onChange={e => set('title', e.target.value)} required />
+    <div className="max-w-2xl">
+      {/* Back link */}
+      <Link to={`/api-docs/${id}`} className="page-back-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Back to API Doc
+      </Link>
+
+      <div className="page-header">
+        <div className="page-header-left">
+          <h1 className="page-title">New Issue</h1>
+          <p className="page-subtitle">Create a new issue linked to this API documentation.</p>
         </div>
-        <div>
-          <label>Mô tả *</label>
-          <textarea style={{ ...inputStyle, height: 100 }} value={form.description}
-            onChange={e => set('description', e.target.value)} required />
+      </div>
+
+      <div className="card">
+        <div className="card-body">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            {/* Title */}
+            <div className="form-group">
+              <label className="form-label form-label-required" htmlFor="issue-title">Title</label>
+              <input
+                id="issue-title"
+                className="form-input"
+                value={form.title}
+                onChange={e => set('title', e.target.value)}
+                placeholder="Briefly describe the issue..."
+                required
+              />
+            </div>
+
+            {/* Description */}
+            <div className="form-group">
+              <label className="form-label form-label-required" htmlFor="issue-desc">Description</label>
+              <textarea
+                id="issue-desc"
+                className="form-textarea"
+                value={form.description}
+                onChange={e => set('description', e.target.value)}
+                placeholder="Provide detailed information about the issue..."
+                required
+                rows={5}
+              />
+            </div>
+
+            {/* Priority */}
+            <div className="form-group" style={{ maxWidth: '280px' }}>
+              <label className="form-label form-label-required" htmlFor="issue-priority">Priority</label>
+              <select
+                id="issue-priority"
+                className="form-select"
+                value={form.priority}
+                onChange={e => set('priority', e.target.value)}
+              >
+                <option>Low</option>
+                <option>Medium</option>
+                <option>High</option>
+              </select>
+            </div>
+
+            {/* Error */}
+            {error && (
+              <div className="alert alert-error" role="alert">{error}</div>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-3 justify-end" style={{ marginTop: '8px' }}>
+              <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" isLoading={loading}>
+                Create Issue
+              </Button>
+            </div>
+          </form>
         </div>
-        <div>
-          <label>Mức ưu tiên *</label>
-          <select style={inputStyle} value={form.priority} onChange={e => set('priority', e.target.value)}>
-            <option>Low</option>
-            <option>Medium</option>
-            <option>High</option>
-          </select>
-        </div>
-        {error && <p style={{ color: 'red', margin: 0 }}>{error}</p>}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button type="submit" disabled={loading}
-            style={{ padding: '8px 20px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-            {loading ? 'Đang tạo...' : 'Tạo Issue'}
-          </button>
-          <button type="button" onClick={() => navigate(-1)}
-            style={{ padding: '8px 20px', background: '#e2e8f0', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-            Hủy
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
   );
 }
