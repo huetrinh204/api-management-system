@@ -5,6 +5,7 @@ export interface ApiDocFilters {
   search?: string;
   method?: string;
   status?: string;
+  project_id?: number;
 }
 
 export const getApiDocs = (filters?: ApiDocFilters) =>

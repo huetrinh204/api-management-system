@@ -14,6 +14,21 @@ export interface AuthResponse {
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export type ApiDocStatus = 'Draft' | 'Active' | 'Deprecated';
+export type ProjectStatus = 'Active' | 'Archived';
+
+export interface Project {
+  id: number;
+  name: string;
+  code: string;
+  description: string | null;
+  color: string | null;
+  status: ProjectStatus;
+  created_by: number;
+  creator?: User;
+  createdAt: string;
+  updatedAt: string;
+  apiDocsCount?: number;
+}
 
 export interface ApiDoc {
   id: number;
@@ -25,7 +40,9 @@ export interface ApiDoc {
   response_sample: string | null;
   status: ApiDocStatus;
   created_by: number;
+  project_id: number | null;
   creator?: User;
+  project?: Project;
   createdAt: string;
   updatedAt: string;
 }

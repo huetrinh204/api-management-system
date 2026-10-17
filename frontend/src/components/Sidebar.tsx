@@ -26,6 +26,14 @@ function BookIcon() {
   );
 }
 
+function FolderIcon() {
+  return (
+    <svg className="sidebar-nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-7l-2-2H5a2 2 0 00-2 2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function IssueIcon() {
   return (
     <svg className="sidebar-nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -122,6 +130,14 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
       {/* Navigation */}
       <nav className="sidebar-nav">
         <p className="sidebar-nav-label">Workspace</p>
+        <NavLink
+          to="/projects"
+          className={({ isActive }) => `sidebar-nav-item${isActive ? ' active' : ''}`}
+          onClick={handleNavClick}
+        >
+          <FolderIcon />
+          Projects
+        </NavLink>
         <NavLink
           to="/api-docs"
           className={({ isActive }) => `sidebar-nav-item${isActive ? ' active' : ''}`}

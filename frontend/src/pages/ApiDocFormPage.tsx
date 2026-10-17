@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, Link, useLocation } from 'react-router-dom';
 import { getApiDoc, createApiDoc, updateApiDoc } from '../api/apiDocApi';
 import type { HttpMethod, ApiDocStatus } from '../types';
 import Button from '../components/ui/Button';
+import ProjectSelect from '../components/ProjectSelect';
 
 const METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 const STATUSES: ApiDocStatus[] = ['Draft', 'Active', 'Deprecated'];
@@ -11,18 +12,27 @@ export default function ApiDocFormPage() {
   const { id } = useParams();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [form, setForm] = useState({
     name: '', method: 'GET' as HttpMethod, endpoint: '',
     description: '', status: 'Draft' as ApiDocStatus,
     request_sample: '', response_sample: '',
+    project_id: null as number | null,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [pageLoading, setPageLoading] = useState(isEdit);
 
   useEffect(() => {
-    if (!isEdit) return;
+    if (!isEdit) {
+      // Check if project_id was passed from ProjectDetailPage
+      const stateProjectId = (location.state as { project_id?: number })?.project_id;
+      if (stateProjectId) {
+        setForm(prev => ({ ...prev, project_id: stateProjectId }));
+      }
+      return;
+    }
     setPageLoading(true);
     getApiDoc(Number(id)).then(res => {
       const d = res.data;
@@ -30,9 +40,10 @@ export default function ApiDocFormPage() {
         name: d.name, method: d.method, endpoint: d.endpoint,
         description: d.description, status: d.status,
         request_sample: d.request_sample || '', response_sample: d.response_sample || '',
+        project_id: d.project_id,
       });
     }).finally(() => setPageLoading(false));
-  }, [id, isEdit]);
+  }, [id, isEdit, location.state]);
 
   const set = (field: string, value: string) => setForm(prev => ({ ...prev, [field]: value }));
 
@@ -128,6 +139,17 @@ export default function ApiDocFormPage() {
                   {STATUSES.map(s => <option key={s}>{s}</option>)}
                 </select>
               </div>
+            </div>
+
+            {/* Project */}
+            <div className="form-group">
+              <label className="form-label" htmlFor="api-project">Project</label>
+              <ProjectSelect 
+                value={form.project_id} 
+                onChange={(id) => setForm(prev => ({ ...prev, project_id: id }))}
+                allowUnassigned={true}
+              />
+              <span className="form-hint">Optional — assign this API doc to a project</span>
             </div>
 
             {/* Endpoint */}

@@ -6,6 +6,7 @@ import { getIssuesByApiDoc } from '../api/issueApi';
 import { useAuth } from '../store/authContext';
 import type { ApiDoc, Comment, Issue } from '../types';
 import { MethodBadge, DocStatusBadge, IssueStatusBadge, PriorityBadge } from '../components/ui/Badge';
+import ProjectBadge from '../components/ui/ProjectBadge';
 import Button from '../components/ui/Button';
 import CodeBlock from '../components/ui/CodeBlock';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -105,6 +106,7 @@ export default function ApiDocDetailPage() {
           <div className="flex items-center gap-3 mb-2 flex-wrap">
             <MethodBadge method={doc.method} />
             <DocStatusBadge status={doc.status} />
+            <ProjectBadge project={doc.project} />
           </div>
           <h1 className="page-title">{doc.name}</h1>
           <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'block', wordBreak: 'break-all' }}>

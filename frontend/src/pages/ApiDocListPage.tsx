@@ -4,6 +4,8 @@ import { getApiDocs, deleteApiDoc } from '../api/apiDocApi';
 import { useAuth } from '../store/authContext';
 import type { ApiDoc } from '../types';
 import { MethodBadge, DocStatusBadge } from '../components/ui/Badge';
+import ProjectBadge from '../components/ui/ProjectBadge';
+import ProjectSelect from '../components/ProjectSelect';
 import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -40,6 +42,7 @@ export default function ApiDocListPage() {
   const [search, setSearch] = useState('');
   const [method, setMethod] = useState('');
   const [status, setStatus] = useState('');
+  const [projectFilter, setProjectFilter] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<ApiDoc | null>(null);
@@ -55,11 +58,18 @@ export default function ApiDocListPage() {
     setLoading(true);
     setFetchError('');
     try {
-      const res = await getApiDocs({
+      const filters: any = {
         search: search || undefined,
         method: method || undefined,
         status: status || undefined,
-      });
+      };
+      
+      // Handle project filter: null means "all projects", number means specific project
+      if (projectFilter !== null) {
+        filters.project_id = projectFilter;
+      }
+      
+      const res = await getApiDocs(filters);
       setDocs(res.data);
     } catch {
       setFetchError('Failed to load API documentation. Please try again.');
@@ -68,7 +78,7 @@ export default function ApiDocListPage() {
     }
   }
 
-  useEffect(() => { fetchDocs(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchDocs(); }, [projectFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleDeleteConfirm() {
     if (!deleteTarget) return;
@@ -145,6 +155,13 @@ export default function ApiDocListPage() {
             <option key={s}>{s}</option>
           ))}
         </select>
+        <div style={{ minWidth: '200px' }}>
+          <ProjectSelect 
+            value={projectFilter} 
+            onChange={setProjectFilter} 
+            allowUnassigned={true}
+          />
+        </div>
         <Button variant="secondary" onClick={fetchDocs} aria-label="Apply filters">
           Search
         </Button>
@@ -161,6 +178,7 @@ export default function ApiDocListPage() {
                 <th>Method</th>
                 <th>Endpoint</th>
                 <th>Name</th>
+                <th>Project</th>
                 <th>Status</th>
                 <th>Created By</th>
                 <th>Updated</th>
@@ -170,7 +188,7 @@ export default function ApiDocListPage() {
             <tbody>
               {docs.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ padding: 0, border: 'none' }}>
+                  <td colSpan={8} style={{ padding: 0, border: 'none' }}>
                     <EmptyState
                       icon={<BookIcon />}
                       title={search || method || status ? 'No results found' : 'No API docs yet'}
@@ -205,6 +223,7 @@ export default function ApiDocListPage() {
                         {doc.name}
                       </Link>
                     </td>
+                    <td><ProjectBadge project={doc.project} /></td>
                     <td><DocStatusBadge status={doc.status} /></td>
                     <td style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
                       {doc.creator?.name || '—'}

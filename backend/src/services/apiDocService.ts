@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { ApiDoc, User } from '../models';
+import { ApiDoc, User, Project } from '../models';
 import { HttpMethod, ApiDocStatus } from '../models/ApiDoc';
 
 const VALID_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
@@ -9,6 +9,8 @@ interface ApiDocFilters {
   search?: string;
   method?: string;
   status?: string;
+  project_id?: string | number;
+  unassigned?: string | boolean;
 }
 
 interface ApiDocInput {
@@ -19,6 +21,7 @@ interface ApiDocInput {
   request_sample?: string;
   response_sample?: string;
   status?: string;
+  project_id?: number | null;
 }
 
 function validateInput(data: ApiDocInput, requireAll = true) {
@@ -65,16 +68,32 @@ export async function getApiDocs(filters: ApiDocFilters) {
     where.status = filters.status;
   }
 
+  // Filter by project_id
+  if (filters.project_id) {
+    where.project_id = Number(filters.project_id);
+  }
+
+  // Filter by unassigned (project_id is NULL)
+  if (filters.unassigned === 'true' || filters.unassigned === true) {
+    where.project_id = null;
+  }
+
   return ApiDoc.findAll({
     where,
-    include: [{ model: User, as: 'creator', attributes: ['id', 'name', 'role'] }],
+    include: [
+      { model: User, as: 'creator', attributes: ['id', 'name', 'role'] },
+      { model: Project, as: 'project', attributes: ['id', 'name', 'code', 'color'], required: false },
+    ],
     order: [['updatedAt', 'DESC']],
   });
 }
 
 export async function getApiDocById(id: number) {
   const doc = await ApiDoc.findByPk(id, {
-    include: [{ model: User, as: 'creator', attributes: ['id', 'name', 'role'] }],
+    include: [
+      { model: User, as: 'creator', attributes: ['id', 'name', 'role'] },
+      { model: Project, as: 'project', attributes: ['id', 'name', 'code', 'color'], required: false },
+    ],
   });
   if (!doc) throw { status: 404, message: 'Tài liệu API không tồn tại' };
   return doc;
@@ -83,6 +102,14 @@ export async function getApiDocById(id: number) {
 export async function createApiDoc(data: ApiDocInput, userId: number) {
   const errors = validateInput(data, true);
   if (errors.length) throw { status: 422, message: errors.join('; ') };
+
+  // Validate project_id if provided
+  if (data.project_id !== undefined && data.project_id !== null) {
+    const project = await Project.findByPk(data.project_id);
+    if (!project) {
+      throw { status: 422, message: 'Project không tồn tại' };
+    }
+  }
 
   return ApiDoc.create({
     name: data.name!.trim(),
@@ -93,6 +120,7 @@ export async function createApiDoc(data: ApiDocInput, userId: number) {
     response_sample: data.response_sample || null,
     status: (data.status as ApiDocStatus) || 'Draft',
     created_by: userId,
+    project_id: data.project_id !== undefined ? data.project_id : null,
   });
 }
 
@@ -103,6 +131,14 @@ export async function updateApiDoc(id: number, data: ApiDocInput) {
   const errors = validateInput(data, false);
   if (errors.length) throw { status: 422, message: errors.join('; ') };
 
+  // Validate project_id if provided
+  if (data.project_id !== undefined && data.project_id !== null) {
+    const project = await Project.findByPk(data.project_id);
+    if (!project) {
+      throw { status: 422, message: 'Project không tồn tại' };
+    }
+  }
+
   // Trim các trường string nếu có
   if (data.name !== undefined) doc.name = data.name.trim();
   if (data.method !== undefined) doc.method = data.method as HttpMethod;
@@ -111,10 +147,14 @@ export async function updateApiDoc(id: number, data: ApiDocInput) {
   if (data.request_sample !== undefined) doc.request_sample = data.request_sample || null;
   if (data.response_sample !== undefined) doc.response_sample = data.response_sample || null;
   if (data.status !== undefined) doc.status = data.status as ApiDocStatus;
+  if (data.project_id !== undefined) doc.project_id = data.project_id;
 
   await doc.save();
   return doc.reload({
-    include: [{ model: User, as: 'creator', attributes: ['id', 'name', 'role'] }],
+    include: [
+      { model: User, as: 'creator', attributes: ['id', 'name', 'role'] },
+      { model: Project, as: 'project', attributes: ['id', 'name', 'code', 'color'], required: false },
+    ],
   });
 }
 

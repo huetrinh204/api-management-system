@@ -13,6 +13,9 @@ import ApiDocFormPage from './pages/ApiDocFormPage';
 import IssueListPage from './pages/IssueListPage';
 import IssueDetailPage from './pages/IssueDetailPage';
 import IssueFormPage from './pages/IssueFormPage';
+import ProjectListPage from './pages/ProjectListPage';
+import ProjectDetailPage from './pages/ProjectDetailPage';
+import ProjectFormPage from './pages/ProjectFormPage';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -31,6 +34,12 @@ createRoot(document.getElementById('root')!).render(
             }
           >
             <Route index element={<Navigate to="/api-docs" replace />} />
+
+            {/* Projects */}
+            <Route path="projects" element={<ProjectListPage />} />
+            <Route path="projects/new" element={<ProjectFormPage />} />
+            <Route path="projects/:id" element={<ProjectDetailPage />} />
+            <Route path="projects/:id/edit" element={<ProjectFormPage />} />
 
             {/* API Docs */}
             <Route path="api-docs" element={<ApiDocListPage />} />

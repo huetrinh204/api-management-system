@@ -3,8 +3,8 @@ import * as apiDocService from '../services/apiDocService';
 
 export async function listApiDocs(req: Request, res: Response, next: NextFunction) {
   try {
-    const { search, method, status } = req.query as Record<string, string>;
-    const docs = await apiDocService.getApiDocs({ search, method, status });
+    const { search, method, status, project_id, unassigned } = req.query as Record<string, string>;
+    const docs = await apiDocService.getApiDocs({ search, method, status, project_id, unassigned });
     return res.json(docs);
   } catch (err) { return next(err); }
 }

@@ -14,6 +14,7 @@ export interface ApiDocAttributes {
   response_sample: string | null;
   status: ApiDocStatus;
   created_by: number;
+  project_id: number | null;
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date | null;
@@ -31,6 +32,7 @@ class ApiDoc extends Model<ApiDocAttributes, ApiDocCreationAttributes> implement
   public response_sample!: string | null;
   public status!: ApiDocStatus;
   public created_by!: number;
+  public project_id!: number | null;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
   public readonly deletedAt!: Date | null;
@@ -54,6 +56,7 @@ ApiDoc.init(
       defaultValue: 'Draft',
     },
     created_by: { type: DataTypes.INTEGER, allowNull: false },
+    project_id: { type: DataTypes.INTEGER, allowNull: true, defaultValue: null },
   },
   {
     sequelize,
