@@ -741,14 +741,13 @@ ul, ol { list-style: none; }
   width: 36px;
   height: 36px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--nebula-purple), var(--electric-violet));
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: var(--shadow-glow-purple);
   overflow: hidden;
-  padding: 4px;
+  padding: 0;
 }
 
 .sidebar-brand-name {
@@ -763,6 +762,7 @@ ul, ol { list-style: none; }
   color: var(--text-tertiary);
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .sidebar-nav {
@@ -1739,14 +1739,12 @@ ul, ol { list-style: none; }
   width: 44px;
   height: 44px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--nebula-purple), var(--electric-violet));
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-glow-purple);
-  animation: nebulaPulse 4s ease-in-out infinite;
   overflow: hidden;
-  padding: 6px;
+  padding: 0;
 }
 
 .login-logo-text { }
@@ -1877,13 +1875,13 @@ ul, ol { list-style: none; }
   width: 30px;
   height: 30px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--nebula-purple), var(--electric-violet));
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   overflow: hidden;
-  padding: 3px;
+  padding: 0;
 }
 
 .mobile-brand-name {

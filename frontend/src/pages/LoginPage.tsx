@@ -24,7 +24,7 @@ function ApiHubIcon() {
     <img 
       src="/logo.png" 
       alt="API Hub logo" 
-      style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.2)' }}
+      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
     />
   );
 }
