@@ -64,11 +64,7 @@ export default function LoginPage() {
   ];
 
   return (
-    <div className="login-page">
-      {/* Galaxy background */}
-      <div className="galaxy-bg" aria-hidden="true" />
-
-      {/* Theme toggle */}
+    <main className="login-page">
       <button
         className="theme-toggle-float"
         onClick={toggleTheme}
@@ -88,119 +84,150 @@ export default function LoginPage() {
         {theme === 'dark' ? 'Light' : 'Dark'}
       </button>
 
-      <div className="login-panel">
-        {/* Logo */}
-        <div className="login-logo">
-          <div className="login-logo-icon">
-            <ApiHubIcon />
-          </div>
-          <div className="login-logo-text">
-            <div className="login-logo-name">API Hub</div>
-            <div className="login-logo-sub">Documentation System</div>
-          </div>
-        </div>
-
-        <h1 className="login-title">Welcome back</h1>
-        <p className="login-subtitle">Sign in to your workspace to continue.</p>
-
-        <form onSubmit={handleSubmit} className="login-form" noValidate>
-          {/* Error */}
-          {error && (
-            <div className="alert alert-error" role="alert">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-              {error}
+      <div className="login-layout">
+        <aside className="login-brand-panel">
+          <div className="login-brand">
+            <div className="login-logo-icon">
+              <ApiHubIcon />
             </div>
-          )}
+            <span className="login-brand-name">API Hub</span>
+          </div>
 
-          {/* Email */}
-          <div className="form-group">
-            <label className="form-label" htmlFor="email">Email address</label>
-            <div className="input-wrapper">
-              <span className="input-icon-left">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M22 6l-10 7L2 6" stroke="currentColor" strokeWidth="1.5" />
-                </svg>
-              </span>
-              <input
-                id="email"
-                type="email"
-                className="form-input has-icon-left"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-                autoComplete="email"
-                aria-describedby={error ? 'login-error' : undefined}
-              />
+          <div className="login-brand-copy">
+            <p className="login-eyebrow">API DOCUMENTATION WORKSPACE</p>
+            <h1>Keep every API clear and current.</h1>
+            <p className="login-brand-description">
+              A shared workspace for your API contracts, project docs, and team feedback.
+            </p>
+          </div>
+
+          <div className="login-api-preview" aria-label="Example API documentation">
+            <div className="login-api-preview-heading">YOUR API WORKSPACE</div>
+            <div className="login-api-row">
+              <span className="login-api-method">GET</span>
+              <code>/v1/projects</code>
+              <span className="login-api-status">Active</span>
+            </div>
+            <div className="login-api-row">
+              <span className="login-api-method login-api-method-post">POST</span>
+              <code>/v1/users</code>
+              <span className="login-api-status">Active</span>
+            </div>
+            <div className="login-api-row">
+              <span className="login-api-method login-api-method-patch">PATCH</span>
+              <code>/v1/issues/:id</code>
+              <span className="login-api-status">Draft</span>
             </div>
           </div>
 
-          {/* Password */}
-          <div className="form-group">
-            <label className="form-label" htmlFor="password">Password</label>
-            <div className="input-wrapper">
-              <span className="input-icon-left">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M7 11V7a5 5 0 0110 0v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </span>
-              <input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                className="form-input has-icon-left has-icon-right"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                autoComplete="current-password"
-              />
-              <button
-                type="button"
-                className="input-icon-right"
-                onClick={() => setShowPassword((p) => !p)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)' }}
+          <p className="login-brand-footer">Built for teams that ship APIs.</p>
+        </aside>
+
+        <section className="login-content" aria-labelledby="login-title">
+          <div className="login-panel">
+            <p className="login-eyebrow login-content-eyebrow">TEAM WORKSPACE</p>
+            <h2 className="login-title" id="login-title">Welcome back</h2>
+            <p className="login-subtitle">Sign in with your work account to continue.</p>
+
+            <form onSubmit={handleSubmit} className="login-form" noValidate>
+              {error && (
+                <div className="alert alert-error" id="login-error" role="alert">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
+                    <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                  {error}
+                </div>
+              )}
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="email">Work email</label>
+                <div className="input-wrapper">
+                  <span className="input-icon-left">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z" stroke="currentColor" strokeWidth="1.5" />
+                      <path d="M22 6l-10 7L2 6" stroke="currentColor" strokeWidth="1.5" />
+                    </svg>
+                  </span>
+                  <input
+                    id="email"
+                    type="email"
+                    className="form-input has-icon-left"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@company.com"
+                    required
+                    autoComplete="email"
+                    aria-describedby={error ? 'login-error' : undefined}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="password">Password</label>
+                <div className="input-wrapper">
+                  <span className="input-icon-left">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                      <path d="M7 11V7a5 5 0 0110 0v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                  </span>
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    className="form-input has-icon-left has-icon-right"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    required
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    className="input-icon-right login-password-toggle"
+                    onClick={() => setShowPassword((p) => !p)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    <EyeIcon open={showPassword} />
+                  </button>
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                isLoading={loading}
+                className="w-full login-submit"
               >
-                <EyeIcon open={showPassword} />
-              </button>
+                Sign In
+              </Button>
+            </form>
+
+            <div className="login-demo">
+              <div className="login-demo-heading">
+                <p className="login-demo-title">Demo access</p>
+                <span>Password: password123</span>
+              </div>
+              {demoAccounts.map((acc) => (
+                <div key={acc.role} className="login-demo-row">
+                  <span className="login-demo-role">{acc.role}</span>
+                  <button
+                    type="button"
+                    onClick={() => setEmail(acc.email)}
+                    className="login-demo-email"
+                    aria-label={`Use ${acc.role} demo account`}
+                  >
+                    {acc.email}
+                  </button>
+                </div>
+              ))}
             </div>
+
+            <p className="login-help">Need an account? Contact your workspace administrator.</p>
           </div>
-
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            isLoading={loading}
-            className="w-full"
-            style={{ marginTop: '4px' }}
-          >
-            Sign In
-          </Button>
-        </form>
-
-        {/* Demo accounts */}
-        <div className="login-demo">
-          <p className="login-demo-title">Demo Accounts — password: password123</p>
-          {demoAccounts.map((acc) => (
-            <div key={acc.role} className="login-demo-row">
-              <span className="login-demo-role">{acc.role}</span>
-              <button
-                type="button"
-                onClick={() => setEmail(acc.email)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--cosmic-cyan)', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}
-                aria-label={`Use ${acc.role} demo account`}
-              >
-                {acc.email}
-              </button>
-            </div>
-          ))}
-        </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
