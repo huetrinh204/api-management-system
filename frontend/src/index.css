@@ -1207,6 +1207,23 @@ ul, ol { list-style: none; }
 .form-input.has-icon-left  { padding-left: 38px; }
 .form-input.has-icon-right { padding-right: 38px; }
 
+.password-visibility-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  transition: var(--transition-fast);
+}
+
+.password-visibility-toggle:hover { color: var(--text-primary); }
+.password-visibility-toggle:focus-visible {
+  outline: 2px solid var(--nebula-purple);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
 /* ============================================================
    TABLE
    ============================================================ */
@@ -1527,6 +1544,64 @@ ul, ol { list-style: none; }
   display: flex;
   gap: var(--space-3);
   justify-content: flex-end;
+}
+
+/* Settings feedback dialog */
+.settings-notice-overlay {
+  background: rgba(31, 41, 55, 0.38);
+  backdrop-filter: blur(5px);
+}
+
+.settings-notice {
+  width: 100%;
+  max-width: 550px;
+  padding: 32px 30px 28px;
+  border: 1px solid #E2E8F0;
+  border-radius: 20px;
+  background: #FFFFFF;
+  box-shadow: 0 20px 55px rgba(15, 23, 42, 0.2);
+  animation: fadeInUp 0.22s ease;
+}
+
+.settings-notice-title {
+  margin: 0 0 14px;
+  color: #1E293B;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.settings-notice-message {
+  margin: 0;
+  color: #64748B;
+  font-size: 1.1rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.settings-notice-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 26px;
+}
+
+.settings-notice-close {
+  min-width: 90px;
+  min-height: 46px;
+  padding: 0 20px;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+@media (max-width: 480px) {
+  .settings-notice {
+    padding: 28px 24px 24px;
+    border-radius: 18px;
+  }
+
+  .settings-notice-message {
+    font-size: 1rem;
+  }
 }
 
 /* ============================================================

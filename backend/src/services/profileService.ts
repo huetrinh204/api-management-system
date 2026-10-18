@@ -34,7 +34,7 @@ export async function changePassword(userId: number, oldPassword: string, newPas
 
   // Verify old password
   const isValid = await bcrypt.compare(oldPassword, user.password_hash);
-  if (!isValid) throw { status: 401, message: 'Current password is incorrect' };
+  if (!isValid) throw { status: 422, message: 'Current password is incorrect' };
 
   // Validate new password
   if (!newPassword || newPassword.length < 8) {
