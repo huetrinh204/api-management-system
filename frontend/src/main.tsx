@@ -16,6 +16,8 @@ import IssueFormPage from './pages/IssueFormPage';
 import ProjectListPage from './pages/ProjectListPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 import ProjectFormPage from './pages/ProjectFormPage';
+import UserManagementPage from './pages/UserManagementPage';
+import UserFormPage from './pages/UserFormPage';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -51,6 +53,11 @@ createRoot(document.getElementById('root')!).render(
             {/* Issues */}
             <Route path="issues" element={<IssueListPage />} />
             <Route path="issues/:id" element={<IssueDetailPage />} />
+
+            {/* Users (Admin only) */}
+            <Route path="users" element={<UserManagementPage />} />
+            <Route path="users/new" element={<UserFormPage />} />
+            <Route path="users/:id/edit" element={<UserFormPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

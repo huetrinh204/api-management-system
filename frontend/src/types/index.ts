@@ -1,10 +1,13 @@
-export type UserRole = 'BA' | 'Backend Developer' | 'Frontend Developer' | 'Tester';
+export type UserRole = 'BA' | 'Backend Developer' | 'Frontend Developer' | 'Tester' | 'Admin';
 
 export interface User {
   id: number;
   name: string;
   email: string;
   role: UserRole;
+  is_active?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AuthResponse {

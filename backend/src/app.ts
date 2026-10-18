@@ -7,6 +7,7 @@ import apiDocRoutes from './routes/apiDocs';
 import issueRoutes from './routes/issues';
 import commentRoutes from './routes/comments';
 import projectRoutes from './routes/projects';
+import userRoutes from './routes/users';
 import { errorHandler } from './middlewares/errorHandler';
 // Import models để đảm bảo associations được load
 import './models';
@@ -29,6 +30,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/api-docs', apiDocRoutes);
 app.use('/api/issues', issueRoutes);
 app.use('/api/comments', commentRoutes);
+app.use('/api/users', userRoutes);
 
 // Global error handler — phải đặt cuối cùng
 app.use(errorHandler);

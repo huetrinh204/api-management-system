@@ -43,6 +43,14 @@ function IssueIcon() {
   );
 }
 
+function UsersIcon() {
+  return (
+    <svg className="sidebar-nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function LogoutIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -154,6 +162,19 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
           <IssueIcon />
           Issues
         </NavLink>
+        {user?.role === 'Admin' && (
+          <>
+            <p className="sidebar-nav-label" style={{ marginTop: '1.5rem' }}>Administration</p>
+            <NavLink
+              to="/users"
+              className={({ isActive }) => `sidebar-nav-item${isActive ? ' active' : ''}`}
+              onClick={handleNavClick}
+            >
+              <UsersIcon />
+              User Management
+            </NavLink>
+          </>
+        )}
       </nav>
 
       {/* User + Theme + Logout */}

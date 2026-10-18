@@ -10,6 +10,11 @@ export async function loginService(email: string, password: string) {
     throw { status: 401, message: 'Email hoặc mật khẩu không đúng' };
   }
 
+  // Check if account is active
+  if (!user.is_active) {
+    throw { status: 403, message: 'Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.' };
+  }
+
   const isMatch = await bcrypt.compare(password, user.password_hash);
   if (!isMatch) {
     throw { status: 401, message: 'Email hoặc mật khẩu không đúng' };

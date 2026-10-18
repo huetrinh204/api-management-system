@@ -1,7 +1,7 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
 
-export type UserRole = 'BA' | 'Backend Developer' | 'Frontend Developer' | 'Tester';
+export type UserRole = 'Admin' | 'BA' | 'Backend Developer' | 'Frontend Developer' | 'Tester';
 
 export interface UserAttributes {
   id: number;
@@ -9,6 +9,7 @@ export interface UserAttributes {
   email: string;
   password_hash: string;
   role: UserRole;
+  is_active: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -21,6 +22,7 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public email!: string;
   public password_hash!: string;
   public role!: UserRole;
+  public is_active!: boolean;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -32,8 +34,13 @@ User.init(
     email: { type: DataTypes.STRING(150), allowNull: false, unique: true },
     password_hash: { type: DataTypes.STRING(255), allowNull: false },
     role: {
-      type: DataTypes.ENUM('BA', 'Backend Developer', 'Frontend Developer', 'Tester'),
+      type: DataTypes.ENUM('Admin', 'BA', 'Backend Developer', 'Frontend Developer', 'Tester'),
       allowNull: false,
+    },
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
     },
   },
   {

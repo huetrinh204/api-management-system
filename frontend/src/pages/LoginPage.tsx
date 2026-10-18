@@ -56,13 +56,6 @@ export default function LoginPage() {
     }
   };
 
-  const demoAccounts = [
-    { role: 'BA',               email: 'ba@example.com' },
-    { role: 'Backend Dev',      email: 'backend@example.com' },
-    { role: 'Frontend Dev',     email: 'frontend@example.com' },
-    { role: 'Tester',           email: 'tester@example.com' },
-  ];
-
   return (
     <main className="login-page">
       <button
@@ -203,26 +196,6 @@ export default function LoginPage() {
                 Sign In
               </Button>
             </form>
-
-            <div className="login-demo">
-              <div className="login-demo-heading">
-                <p className="login-demo-title">Demo access</p>
-                <span>Password: password123</span>
-              </div>
-              {demoAccounts.map((acc) => (
-                <div key={acc.role} className="login-demo-row">
-                  <span className="login-demo-role">{acc.role}</span>
-                  <button
-                    type="button"
-                    onClick={() => setEmail(acc.email)}
-                    className="login-demo-email"
-                    aria-label={`Use ${acc.role} demo account`}
-                  >
-                    {acc.email}
-                  </button>
-                </div>
-              ))}
-            </div>
 
             <p className="login-help">Need an account? Contact your workspace administrator.</p>
           </div>
