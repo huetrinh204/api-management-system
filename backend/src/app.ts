@@ -8,6 +8,7 @@ import issueRoutes from './routes/issues';
 import commentRoutes from './routes/comments';
 import projectRoutes from './routes/projects';
 import userRoutes from './routes/users';
+import profileRoutes from './routes/profile';
 import { errorHandler } from './middlewares/errorHandler';
 // Import models để đảm bảo associations được load
 import './models';
@@ -26,6 +27,7 @@ app.get('/health', (_req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/profile', profileRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/api-docs', apiDocRoutes);
 app.use('/api/issues', issueRoutes);

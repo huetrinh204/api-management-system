@@ -18,6 +18,7 @@ import ProjectDetailPage from './pages/ProjectDetailPage';
 import ProjectFormPage from './pages/ProjectFormPage';
 import UserManagementPage from './pages/UserManagementPage';
 import UserFormPage from './pages/UserFormPage';
+import UserSettingsPage from './pages/UserSettingsPage';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -58,6 +59,9 @@ createRoot(document.getElementById('root')!).render(
             <Route path="users" element={<UserManagementPage />} />
             <Route path="users/new" element={<UserFormPage />} />
             <Route path="users/:id/edit" element={<UserFormPage />} />
+
+            {/* Settings */}
+            <Route path="settings" element={<UserSettingsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

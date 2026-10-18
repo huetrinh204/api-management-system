@@ -51,6 +51,15 @@ function UsersIcon() {
   );
 }
 
+function SettingsIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function LogoutIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -60,9 +69,10 @@ function LogoutIcon() {
 }
 
 function ApiHubIcon() {
+  const { theme } = useTheme();
   return (
     <img 
-      src="/logo.png" 
+      src={theme === 'dark' ? '/logo_dark.png' : '/logo.png'}
       alt="API Hub logo" 
       style={{ width: '100%', height: '100%', objectFit: 'contain' }}
     />
@@ -177,11 +187,28 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         )}
       </nav>
 
-      {/* User + Theme + Logout */}
+      {/* User + Settings + Logout */}
       <div className="sidebar-footer">
         {user && (
           <div className="sidebar-user">
-            <div className="sidebar-user-avatar" aria-hidden="true">
+            {user.avatar_url ? (
+              <img
+                src={user.avatar_url}
+                alt={user.name}
+                className="sidebar-user-avatar"
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                }}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.nextElementSibling!.setAttribute('style', 'display: flex');
+                }}
+              />
+            ) : null}
+            <div className="sidebar-user-avatar" aria-hidden="true" style={{ display: user.avatar_url ? 'none' : 'flex' }}>
               {getInitials(user.name)}
             </div>
             <div className="sidebar-user-info">
@@ -192,12 +219,12 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         )}
         <button
           className="theme-toggle"
-          onClick={toggleTheme}
+          onClick={() => navigate('/settings')}
           type="button"
-          aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          aria-label="Open settings"
         >
-          {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-          {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+          <SettingsIcon />
+          Settings
         </button>
         <button
           className="sidebar-logout-btn"

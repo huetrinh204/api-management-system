@@ -10,6 +10,7 @@ export interface UserAttributes {
   password_hash: string;
   role: UserRole;
   is_active: boolean;
+  avatar_url?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -23,6 +24,7 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public password_hash!: string;
   public role!: UserRole;
   public is_active!: boolean;
+  public avatar_url!: string | null;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -41,6 +43,10 @@ User.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: true,
+    },
+    avatar_url: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
     },
   },
   {
